@@ -40,48 +40,47 @@ paste_out <- function(x){paste0("04_infobites/", x)}
 # Ingreso promedio 
 df_brecha <- dplyr::tribble(
     ~ sector     ,            ~ general, ~ hombres, ~ mujeres,
-    "Agricultura",                 3970,	3964,	4014,
+    # "Agricultura",                 3970,	3964,	4014,
     "Comercio",                    6483,	7628,	5403,
-    "Construcción",                8036,	7981,	9783,
+    "Construcción",                8036,	9783,	7981,
     "Gobierno",                   10892,   11314,  10270,
-    "Industria extractiva",       12312,   12165,  13078,
+    "Industria extractiva",       12312,   13078,  12165,
     "Industria manufacturera",     7436,	8310,	6004,
     "Restaurantes y alojamientos", 8404,	8850,	7839,
     "Servicios diversos",          5654,	7114,	4461,
     "Servicios profesionales",     6025,	7533,	4821,
     "Servicios sociales",         10179,   10749,	9240,
     "Transportes",                10290,   11423,	9647
-    )
-
-df_brecha <- df_brecha %>% 
-    mutate(brecha = hombres - mujeres) %>% 
+    ) %>% 
+    mutate(brecha = hombres - mujeres,
+           brecha_abs = abs(hombres-mujeres)) %>% 
     arrange(brecha) %>% 
-    mutate(sector = forcats::fct_inorder(sector))
+    #mutate(sector = forcats::fct_inorder(sector)) %>% 
+    glimpse
 
 
 # 2. Infobite ------------------------------------------------------------------
 
 v_colors <- c("#04b187", "#6950d8")
 
-g <- 
-    ggplot(df_brecha, 
-        aes(y = sector, x = hombres, xend = mujeres)) +
+ggplot(df_brecha, 
+        aes(y = reorder(sector, brecha_abs), x = hombres, xend = mujeres, group = sector)) +
         # Geoms       
-        geom_dumbbell(size = 2, color = mcv_blacks[3],
+        geom_dumbbell(size = 3, color = mcv_blacks[3],
             colour_x = v_colors[1], colour_xend = v_colors[2],
             dot_guide_size = 30
             ) +
-        geom_text(aes(label = scales::dollar(hombres)), nudge_y = -0.3, color = "#777777",  family = "Ubuntu", size = 7) +
+        geom_text(aes(label = scales::dollar(hombres)), nudge_y = 0.3, color = "#777777",  family = "Ubuntu", size = 7) +
         geom_text(aes(label = scales::dollar(mujeres), x = mujeres), nudge_y = -0.3, color = "#777777",  family = "Ubuntu", size = 7) +
-        annotate("text", x = 5000, y = 11.5, label = "Mujeres", color = "#777777", size = 8, family = "Ubuntu") +
-        annotate("text", x = 7500, y = 11.5, label = "Hombres", color = "#777777", size = 8, family = "Ubuntu") +
+        annotate("text", x = 5000, y = 11.5, label = "Mujeres", color = mcv_discrete[1], size = 8, family = "Ubuntu", fontface = "bold") +
+        annotate("text", x = 7500, y = 11.5, label = "Hombres", color = mcv_discrete[3], size = 8, family = "Ubuntu", fontface = "bold") +
         # Etiquetas
         labs(
             title = "Brecha salarial entre hombres y mujeres", 
             subtitle = "Por sector, según el ingreso promedio mensual", 
             x = "", 
             y = "") +
-        scale_x_continuous(labels = scales::dollar_format()) +
+        scale_x_continuous(labels = scales::dollar_format(), limits = c(2000,15000), breaks = seq(4000,14000,2000)) +
         expand_limits(y = c(1, 12)) +
         # Tema 
         theme_minimal() +
@@ -95,11 +94,11 @@ g <-
             text              = element_text(family = "Ubuntu"),
             axis.title.x      = element_blank(),
             axis.title.y      = element_text(size = 25),
-            axis.text.x       = element_text(size = 25, angle = 90),
+            axis.text.x       = element_text(size = 25),
             axis.text.y       = element_text(size = 25),
             legend.text       = element_text(size = 25),
             legend.position   = "none") 
 
-ggimage::ggbackground(g, paste_out("00_plantillas/01_inegi.pdf"))
-ggsave(filename = paste_out("01_brechas_sectores.png"), width = 23, height = 12, dpi = 100, bg= "transparent")
+
+ggsave(filename = "~/desktop/99_brechas_sectores.png", width = 15, height = 20, dpi = 100, bg= "transparent")
 
